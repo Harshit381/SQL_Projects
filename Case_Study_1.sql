@@ -1,13 +1,12 @@
-CREATE SCHEMA db
-use db
-CREATE TABLE sales (
-  "customer_id" VARCHAR(1),
-  "order_date" DATE,
-  "product_id" INTEGER);
+CREATE DATABASE db
+USE db
+	
+CREATE TABLE IF NOT EXISTS sales (
+  customer_id VARCHAR(1),
+  order_date DATE,
+  product_id INT);
 
-INSERT INTO sales
-  ("customer_id", "order_date", "product_id")
-VALUES
+INSERT INTO sales VALUES
   ('A', '2021-01-01', '1'),
   ('A', '2021-01-01', '2'),
   ('A', '2021-01-07', '2'),
@@ -24,40 +23,35 @@ VALUES
   ('C', '2021-01-01', '3'),
   ('C', '2021-01-07', '3');
  
-CREATE TABLE menu (
-  "product_id" INTEGER,
-  "product_name" VARCHAR(5),
-  "price" INTEGER
-);
+CREATE TABLE IF NOT EXISTS menu (
+  product_id INTEGER,
+  product_name VARCHAR(5),
+  price INT);
 
-INSERT INTO menu
-  ("product_id", "product_name", "price")
-VALUES
+INSERT INTO menu VALUES
   ('1', 'sushi', '10'),
   ('2', 'curry', '15'),
   ('3', 'ramen', '12');
   
-CREATE TABLE members (
-  "customer_id" VARCHAR(1),
-  "join_date" DATE
-);
+CREATE TABLE IF NOT EXISTS members (
+  customer_id VARCHAR(1),
+  join_date DATE);
 
-INSERT INTO members
-  ("customer_id", "join_date")
-VALUES
+INSERT INTO members VALUES
   ('A', '2021-01-07'),
   ('B', '2021-01-09');
 
-  SELECT * from sales
-  SELECT * from menu
-  SELECT * from members
+  SELECT * FROM sales;
+  SELECT * FROM menu;
+  SELECT * FROM members;
 
 
  -- 1. What is the total amount each customer spent at the restaurant?
 
  SELECT s.customer_id, SUM(price) AS total_amount_spend 
- FROM sales s JOIN menu m ON s.product_id=m.product_id
- GROUP BY s.customer_id
+ FROM sales s 
+ JOIN menu m ON s.product_id=m.product_id
+ GROUP BY s.customer_id;
 
  -- 2. How many days has each customer visited the restaurant?
 
@@ -67,7 +61,7 @@ VALUES
  -- 3. What was the first item from the menu purchased by each customer?
  
  WITH cte AS ( 
- SELECT * , dense_rank () over (PARTITION BY customer_id ORDER BY order_date) AS dr FROM sales ) 
+ SELECT *, dense_rank () over (PARTITION BY customer_id ORDER BY order_date) AS dr FROM sales ) 
 
  SELECT c.customer_id, m.product_name FROM cte c LEFT JOIN menu m ON c.product_id = m.product_id
  WHERE dr = 1
@@ -75,9 +69,11 @@ VALUES
  
  -- 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
  
- SELECT top 1 product_id , COUNT(product_id) FROM sales
- GROUP BY product_id 
- ORDER BY product_id DESC 
+ SELECT m.product_name, s.product_id, COUNT(s.product_id) FROM sales s
+ LEFT JOIN menu m ON s.product_id = m.product_id
+ GROUP BY s.product_id, m.product_name
+ ORDER BY COUNT(s.product_id) DESC
+ LIMIT 1;
  
  -- 5. Which item was the most popular for each customer?
  
